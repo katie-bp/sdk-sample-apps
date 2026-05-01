@@ -1,5 +1,5 @@
 {
-  "originHash" : "1dcd2aa4a42ea1c35ca3bf6054c97000591cbba67037b5443fb584d089ebe891",
+  "originHash" : "d6c973f4d8bd5e147835531715da261a0e59f34ccfe24660c81ada59aeb27ed0",
   "pins" : [
     {
       "identity" : "app-check",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/CocoaLumberjack/CocoaLumberjack.git",
       "state" : {
-        "revision" : "a9ed4b6f9bdedce7d77046f43adfb8ce1fd54114",
-        "version" : "3.9.0"
+        "revision" : "c5f2ed4d219866117e135cf648180dc7b66739d3",
+        "version" : "3.9.1"
       }
     },
     {
@@ -87,7 +87,7 @@
       "kind" : "registry",
       "location" : "",
       "state" : {
-        "version" : "5.4.1"
+        "version" : "4.8.2"
       }
     },
     {
@@ -96,7 +96,7 @@
       "location" : "https://github.com/ForgeRock/ping-ios-sdk",
       "state" : {
         "branch" : "develop",
-        "revision" : "9b37c20f99eb1ce418e6dc8ab491e32fad86051e"
+        "revision" : "375b11f008d92ca0ac71fdc60a1f052c3943622e"
       }
     },
     {
@@ -104,8 +104,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pingidentity/pingone-signals-sdk-ios.git",
       "state" : {
-        "revision" : "bf37bd85fa909428d764630c71cf0d4f3d2d7e05",
-        "version" : "5.3.0"
+        "revision" : "e41f7070fdbb43dd7762274ec610c099256a7c7e",
+        "version" : "5.4.0"
       }
     },
     {
@@ -140,8 +140,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log",
       "state" : {
-        "revision" : "bc386b95f2a16ccd0150a8235e7c69eab2b866ca",
-        "version" : "1.8.0"
+        "revision" : "5073617dac96330a486245e4c0179cb0a6fd2256",
+        "version" : "1.12.0"
       }
     }
   ],

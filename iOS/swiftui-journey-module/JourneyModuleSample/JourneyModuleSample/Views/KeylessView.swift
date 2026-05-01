@@ -29,8 +29,8 @@ struct KeylessView: View {
     
     func keylessConfigure() async throws {
         let setupConfig = SetupConfig(
-            apiKey: <#apiKey#>,
-            hosts: [<#host#>]
+            apiKey: "y2deaaaaaaaa9pvk5p37fizue183co9h",
+            hosts: ["https://auth-1.eks.core-staging.keyless.technology"]
         )
         
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
