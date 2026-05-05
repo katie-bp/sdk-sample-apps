@@ -13,6 +13,7 @@ import PingOrchestrate
 import PingLogger
 import PingStorage
 import PingJourney
+import PingJourneyPlugin
 import Combine
 
 /// Configures and initializes the Journey instance with the AIC/AM server and OAuth 2.0 client details.
@@ -41,6 +42,18 @@ public let journey = Journey.createJourney { config in
         oidcValue.scopes = ["openid", "profile", "email"]
         oidcValue.redirectUri = "https://openam-recognize.forgeblocks.com/am/callback"
         oidcValue.discoveryEndpoint = "https://openam-recognize.forgeblocks.com/am/oauth2/alpha/.well-known/openid-configuration"
+    }
+//    config.serverUrl = "https://am.localtest.me:8445/am"
+//    config.realm = "alpha"
+//    config.cookie = "iPlanetDirectoryPro"
+//    config.module(PingJourney.OidcModule.config) { oidcValue in
+//        oidcValue.clientId = "iosClient"
+//        oidcValue.scopes = ["openid", "profile", "email"]
+//        oidcValue.redirectUri = "https://am.localtest.me:8445/am/callback"
+//        oidcValue.discoveryEndpoint = "https://am.localtest.me:8445/am/oauth2/alpha/.well-known/openid-configuration"
+//    }
+    Task {
+        await CallbackRegistry.shared.register(type: "PingOneRecognizeCallback", callback: PingOneRecognizeCallback.self)
     }
 }
 
@@ -174,7 +187,7 @@ class JourneyViewModel: ObservableObject {
         }
         
         let next = await journey.start(journeyName) { options in
-            options.forceAuth = false
+            options.forceAuth = true
             options.noSession = false
         }
 

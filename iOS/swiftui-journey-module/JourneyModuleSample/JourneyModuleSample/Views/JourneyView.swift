@@ -144,6 +144,7 @@ struct JourneyNodeView: View {
             callback is SuspendedTextOutputCallback ||
             callback is PingOneProtectInitializeCallback ||
             callback is PingOneProtectEvaluationCallback ||
+            callback is PingOneRecognizeCallback ||
             callback is IdpCallback ||
             callback is FidoRegistrationCallback ||
             callback is FidoAuthenticationCallback ||
@@ -236,14 +237,17 @@ struct JourneyNodeView: View {
                 case let deviceSigningVerifierCallback as DeviceSigningVerifierCallback:
                     DeviceSigningVerifierCallbackView(callback: deviceSigningVerifierCallback, onNext: onNext).id(deviceSigningVerifierCallback.id)
                     
-                case let hiddenValueCallback as HiddenValueCallback:
-                    if let metadataCallback = continueNode.callbacks.first(where: { $0 is MetadataCallback }) as? MetadataCallback {
+                case let recognizeCallback as PingOneRecognizeCallback:
+                    KeylessView(callback: recognizeCallback, onNext: onNext).id(recognizeCallback.stableId)
+
+                case _ as HiddenValueCallback:
+                    if continueNode.callbacks.first(where: { $0 is MetadataCallback }) is MetadataCallback {
                         // Handle the case when MetadataCallback is present
                         // You can now access metadataCallback.value and other properties
-                        KeylessView(callback: hiddenValueCallback, metadataCallback: metadataCallback, onNext: onNext)
+//                        KeylessView(callback: hiddenValueCallback, metadataCallback: metadataCallback, onNext: onNext)
                     } else {
                         // Handle the case when MetadataCallback is not present
-                        KeylessView(callback: hiddenValueCallback, metadataCallback: nil, onNext: onNext)
+//                        KeylessView(callback: hiddenValueCallback, metadataCallback: nil, onNext: onNext)
                     }
                     
                 default:

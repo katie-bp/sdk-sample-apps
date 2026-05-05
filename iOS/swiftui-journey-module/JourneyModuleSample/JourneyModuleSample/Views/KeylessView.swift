@@ -11,10 +11,10 @@ import KeylessSDK
 
 struct KeylessView: View {
     //    let viewModel = KeylessViewModel()
-    let callback: HiddenValueCallback
-    let metadataCallback: MetadataCallback?
+    let callback: PingOneRecognizeCallback
     let onNext: () -> Void
-    
+    @State private var hasStarted = false
+
     var body: some View {
         VStack {
             Text("Device Signing")
@@ -24,13 +24,19 @@ struct KeylessView: View {
                 .padding()
             ProgressView()
         }
-        .onAppear(perform: handleKeyless)
+        .onAppear {
+            guard !hasStarted else { return }
+            hasStarted = true
+            handleKeyless()
+        }
     }
     
     func keylessConfigure() async throws {
+        let host = callback.host.isEmpty ? "https://auth-1.eks.core-staging.keyless.technology" : callback.host
+        print("[KeylessView] Configuring Keyless SDK with apiKey: \(callback.apiKey), host: \(host)")
         let setupConfig = SetupConfig(
-            apiKey: "y2deaaaaaaaa9pvk5p37fizue183co9h",
-            hosts: ["https://auth-1.eks.core-staging.keyless.technology"]
+            apiKey: callback.apiKey,
+            hosts: [host]
         )
         
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
@@ -43,8 +49,6 @@ struct KeylessView: View {
                     }
                 }
             }
-            
-            
         }
     }
     
@@ -70,8 +74,31 @@ struct KeylessView: View {
     
     func keylessEnroll() async throws -> KeylessResponse? {
         Keyless.reset()
-        let jwtSigningInfo = JwtSigningInfo(claimTransactionData: "test")
-        let configuration = BiomEnrollConfig(jwtSigningInfo: jwtSigningInfo, generatingClientState: .backup)
+        let opts = callback.mobileSDKOptions
+        
+        let txData = callback.transactionData.isEmpty ? "test" : callback.transactionData
+        let jwtSigningInfo = JwtSigningInfo(claimTransactionData: txData)
+        
+        let livenessConfig = opts["livenessConfiguration"].flatMap { Keyless.LivenessConfiguration(rawValue: $0) } ?? .LEVEL_1
+        let livenessEnvAware = opts["livenessEnvironmentAware"].map { $0.lowercased() == "true" } ?? BiomEnrollConfig.DEFAULT_LIVENESS_ENV_AWARE
+        let cameraDelay = opts["cameraDelaySeconds"].flatMap(Int.init) ?? BiomEnrollConfig.DEFAULT_DELAY
+        let shouldRetrieveFrame = opts["shouldRetrieveEnrollmentFrame"].map { $0.lowercased() == "true" } ?? BiomEnrollConfig.DEFAULT_SHOULD_RETRIEVE_ENROLLMENT_FRAME
+        let showSuccess = opts["showSuccessFeedback"].map { $0.lowercased() == "true" } ?? BiomEnrollConfig.DEFAULT_SHOW_SUCCESS_FEEDBACK
+        let showFailure = opts["showFailureFeedback"].map { $0.lowercased() == "true" } ?? BiomEnrollConfig.DEFAULT_SHOW_FAILURE_FEEDBACK
+        let showInstructions = opts["showInstructionsScreen"].map { $0.lowercased() == "true" } ?? BiomEnrollConfig.DEFAULT_SHOW_INSTRUCTIONS_SCREEN
+        let generatingClientState: ClientStateType? = callback.generateClientState ? .backup : nil
+        
+        let configuration = BiomEnrollConfig(
+            jwtSigningInfo: jwtSigningInfo,
+            livenessConfiguration: livenessConfig,
+            livenessEnvironmentAware: livenessEnvAware,
+            cameraDelaySeconds: cameraDelay,
+            generatingClientState: generatingClientState,
+            shouldRetrieveEnrollmentFrame: shouldRetrieveFrame,
+            showInstructionsScreen: showInstructions,
+            showSuccessFeedback: showSuccess,
+            showFailureFeedback: showFailure
+        )
         let response = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<KeylessResponse, Error>) in
             DispatchQueue.main.async {
                 Keyless.enroll(
@@ -79,7 +106,7 @@ struct KeylessView: View {
                     onCompletion: { result in
                         switch result {
                         case .success(let enrollmentSuccess):
-                            print("Enrollment finished successfully. UserID: \(enrollmentSuccess.keylessId)")
+                            print("Enrollment finished successfully. UserID: \(enrollmentSuccess.keylessId ?? "")")
                             let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: enrollmentSuccess.clientState, error: nil)
                             continuation.resume(returning: (response))
                         case .failure(let error):
@@ -95,9 +122,25 @@ struct KeylessView: View {
     func keylessAuthenticate(clientState: String?) async throws -> KeylessResponse? {
         do {
             let enrolled = try await isUserEnrolledOnDevice()
-            let jwtSigningInfo = JwtSigningInfo(claimTransactionData: "test")
+
+            let opts = callback.mobileSDKOptions
+
+            let txData = callback.transactionData.isEmpty ? "test" : callback.transactionData
+            let jwtSigningInfo = JwtSigningInfo(claimTransactionData: txData)
+            
+            let livenessConfig = opts["livenessConfiguration"].flatMap { Keyless.LivenessConfiguration(rawValue: $0) } ?? .LEVEL_1
+            let livenessEnvAware = opts["livenessEnvironmentAware"].map { $0.lowercased() == "true" } ?? BiomAuthConfig.DEFAULT_LIVENESS_ENV_AWARE
+            let cameraDelay = opts["cameraDelaySeconds"].flatMap(Int.init) ?? BiomAuthConfig.DEFAULT_CAMERA_DELAY_SECONDS
+            let showSuccess = opts["showSuccessFeedback"].map { $0.lowercased() == "true" } ?? BiomAuthConfig.DEFAULT_SHOW_SUCCESS_FEEDBACK
+            
             if enrolled {
-                let configuration = BiomAuthConfig(jwtSigningInfo: jwtSigningInfo)
+                let configuration = BiomAuthConfig(
+                    livenessConfiguration: livenessConfig,
+                    livenessEnvironmentAware: livenessEnvAware,
+                    cameraDelaySeconds: cameraDelay,
+                    showSuccessFeedback: showSuccess,
+                    jwtSigningInfo: jwtSigningInfo
+                )
                 let response = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<KeylessResponse, Error>) in
                     DispatchQueue.main.async {
                         Keyless.authenticate(
@@ -117,7 +160,21 @@ struct KeylessView: View {
                 }
                 return response
             } else {
-                let configuration = BiomEnrollConfig(clientState: clientState, jwtSigningInfo: jwtSigningInfo)
+                let showInstructions = opts["showInstructionsScreen"].map { $0.lowercased() == "true" } ?? BiomEnrollConfig.DEFAULT_SHOW_INSTRUCTIONS_SCREEN
+                let showFailure = opts["showFailureFeedback"].map { $0.lowercased() == "true" } ?? BiomEnrollConfig.DEFAULT_SHOW_FAILURE_FEEDBACK
+                let shouldRetrieveFrame = opts["shouldRetrieveEnrollmentFrame"].map { $0.lowercased() == "true" } ?? BiomEnrollConfig.DEFAULT_SHOULD_RETRIEVE_ENROLLMENT_FRAME
+                
+                let configuration = BiomEnrollConfig(
+                    clientState: clientState,
+                    jwtSigningInfo: jwtSigningInfo,
+                    livenessConfiguration: livenessConfig,
+                    livenessEnvironmentAware: livenessEnvAware,
+                    cameraDelaySeconds: cameraDelay,
+                    shouldRetrieveEnrollmentFrame: shouldRetrieveFrame,
+                    showInstructionsScreen: showInstructions,
+                    showSuccessFeedback: showSuccess,
+                    showFailureFeedback: showFailure
+                )
                 let response = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<KeylessResponse, Error>) in
                     DispatchQueue.main.async {
                         Keyless.enroll(
@@ -146,33 +203,31 @@ struct KeylessView: View {
         Task { @MainActor in
             do {
                 try await keylessConfigure()
-                
-                if (callback.valueId == "keylessEnrolment") {
+
+                if callback.operationType == "ENROLL" {
                     let keylessPayload = try await keylessEnroll()
-                    if let jsonData = try? JSONEncoder().encode(keylessPayload),
-                       let jsonString = String(data: jsonData, encoding: .utf8) {
-                        print(jsonString)
-                        callback.setValue(jsonString)
-                        onNext()
+                    if let jwt = keylessPayload?.jwt {
+                        print("[KeylessView] Setting signedJwt: \(jwt)")
+                        callback.setSignedJwt(jwt)
                     }
-                } else if (callback.valueId == "keylessAuthentication") {
-                    let keylessPayload = try await keylessAuthenticate(clientState: callback.value)
-                    if let jsonData = try? JSONEncoder().encode(keylessPayload),
-                       let jsonString = String(data: jsonData, encoding: .utf8) {
-                        print(jsonString)
-                        callback.setValue(jsonString)
-                        onNext()
+                    if let clientState = keylessPayload?.clientState {
+                        print("[KeylessView] Setting inputClientState: \(clientState)")
+                        callback.setInputClientState(clientState)
                     }
-                }
-            } catch {
-                print("Keyless Error: \(error)")
-                let keylessPayload: KeylessResponse = KeylessResponse(jwt: nil, clientState: nil, error: error.localizedDescription)
-                if let jsonData = try? JSONEncoder().encode(keylessPayload),
-                   let jsonString = String(data: jsonData, encoding: .utf8) {
-                    print(jsonString)
-                    callback.setValue(jsonString)
+                    onNext()
+                } else if callback.operationType == "AUTHENTICATE" {
+                    print("[KeylessView] Authenticating with clientState: \(callback.clientState)")
+                    let keylessPayload = try await keylessAuthenticate(clientState: callback.clientState)
+                    if let jwt = keylessPayload?.jwt {
+                        print("[KeylessView] Setting signedJwt: \(jwt)")
+                        callback.setSignedJwt(jwt)
+                    }
                     onNext()
                 }
+            } catch {
+                print("[KeylessView] Keyless Error: \(error)")
+                callback.setClientError(error.localizedDescription)
+                onNext()
             }
         }
     }
