@@ -45,3 +45,12 @@ Android
 - Java 17+
 - Gradle 8.6+
 - Android API level 23+
+
+## Simple Start
+
+Open JourneyModuleSample (under iOS/swiftui-journey-module) in Xcode, change the simualtor to be "My Mac (Designed for iPad)", press the play (run) button on the top right of the left side bar. 
+Once running, click the Journey Flow button, and enter the journey name (RecognizeEnrollment), then start journey to go through the flow.
+
+To set this up against a local env, update ViewModels/JourneyViewModel serverUrl etc to point to your environment. 
+Make sure you add the server api key and recognize api key to the default keystore, use the aliases pingone-recognize-server-api-key and pingone-recognize-api-key respectively for them. 
+Use the postman collection here to get set up: [Recognize Collection](https://github.com/katie-barrett-powell_pingcorp/postman-collections/blob/master/PingOne%20Recognize.postman_collection.json)
