@@ -51,8 +51,10 @@ Install xcode form the app store
 
 Run this with xcode closed:
 
+```
 swift package-registry set --global --scope keyless https://swift.cloudsmith.io/keyless/partners/
 swift package-registry login https://swift.cloudsmith.io/keyless/partners/ --token 99FffDQOoqb5e8oR
+```
 
 Open JourneyModuleSample (under iOS/swiftui-journey-module) in xcode, change the simualtor to be "My Mac (Designed for iPad)", press the play (run) button on the top right of the left side bar. 
 Once running, click the Journey Flow button, and enter the journey name (RecognizeEnrollment), then start journey to go through the flow.
