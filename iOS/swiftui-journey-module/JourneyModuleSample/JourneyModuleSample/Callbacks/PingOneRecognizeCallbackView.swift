@@ -188,7 +188,7 @@ class PingOneRecognizeViewModel: ObservableObject {
                 Keyless.enroll(configuration: configuration) { result in
                     switch result {
                     case .success(let success):
-                        continuation.resume(returning: KeylessResponse(jwt: success.signedJwt, clientState: success.clientState, error: nil))
+                        continuation.resume(returning: KeylessResponse(jwt: success.signedJwt, clientState: success.clientState, keylessId: success.keylessId, error: nil))
                     case .failure(let error):
                         continuation.resume(throwing: error)
                     }
@@ -207,7 +207,7 @@ class PingOneRecognizeViewModel: ObservableObject {
                     Keyless.authenticate(configuration: configuration) { result in
                         switch result {
                         case .success(let success):
-                            continuation.resume(returning: KeylessResponse(jwt: success.signedJwt, clientState: nil, error: nil))
+                            continuation.resume(returning: KeylessResponse(jwt: success.signedJwt, clientState: nil, keylessId: nil, error: nil))
                         case .failure(let error):
                             continuation.resume(throwing: error)
                         }
@@ -221,7 +221,7 @@ class PingOneRecognizeViewModel: ObservableObject {
                     Keyless.enroll(configuration: configuration) { result in
                         switch result {
                         case .success(let success):
-                            continuation.resume(returning: KeylessResponse(jwt: success.signedJwt, clientState: nil, error: nil))
+                            continuation.resume(returning: KeylessResponse(jwt: success.signedJwt, clientState: nil, keylessId: success.keylessId, error: nil))
                         case .failure(let error):
                             continuation.resume(throwing: error)
                         }
@@ -240,7 +240,7 @@ class PingOneRecognizeViewModel: ObservableObject {
     }
 
     private func submitError(_ error: Error) {
-        let response = KeylessResponse(jwt: nil, clientState: nil, error: error.localizedDescription)
+        let response = KeylessResponse(jwt: nil, clientState: nil, keylessId: nil, error: error.localizedDescription)
         if let jsonData = try? JSONEncoder().encode(response),
            let jsonString = String(data: jsonData, encoding: .utf8) {
             _ = callback.input(jsonString)

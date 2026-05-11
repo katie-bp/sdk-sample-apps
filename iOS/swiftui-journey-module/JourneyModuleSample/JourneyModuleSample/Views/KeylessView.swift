@@ -87,8 +87,10 @@ struct KeylessView: View {
         let showFailure = opts["showFailureFeedback"].map { $0.lowercased() == "true" } ?? BiomEnrollConfig.DEFAULT_SHOW_FAILURE_FEEDBACK
         let showInstructions = opts["showInstructionsScreen"].map { $0.lowercased() == "true" } ?? BiomEnrollConfig.DEFAULT_SHOW_INSTRUCTIONS_SCREEN
         let generatingClientState: ClientStateType? = callback.generateClientState ? .backup : nil
-        
+        let clientState: String? = callback.clientState.isEmpty ? nil : callback.clientState
+
         let configuration = BiomEnrollConfig(
+            clientState: clientState,
             jwtSigningInfo: jwtSigningInfo,
             livenessConfiguration: livenessConfig,
             livenessEnvironmentAware: livenessEnvAware,
@@ -107,7 +109,7 @@ struct KeylessView: View {
                         switch result {
                         case .success(let enrollmentSuccess):
                             print("Enrollment finished successfully. UserID: \(enrollmentSuccess.keylessId ?? "")")
-                            let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: enrollmentSuccess.clientState, error: nil)
+                            let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: enrollmentSuccess.clientState, keylessId: enrollmentSuccess.keylessId, error: nil)
                             continuation.resume(returning: (response))
                         case .failure(let error):
                             continuation.resume(throwing: error)
@@ -149,7 +151,7 @@ struct KeylessView: View {
                                 switch result {
                                 case .success(let enrollmentSuccess):
                                     print("Authentication finished successfully.")
-                                    let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: nil, error: nil)
+                                    let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: nil, keylessId: nil, error: nil)
                                     continuation.resume(returning: (response))
                                 case .failure(let error):
                                     continuation.resume(throwing: error)
@@ -183,7 +185,7 @@ struct KeylessView: View {
                                 switch result {
                                 case .success(let enrollmentSuccess):
                                     print("Authentication finished successfully.")
-                                    let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: nil, error: nil)
+                                    let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: nil, keylessId: enrollmentSuccess.keylessId, error: nil)
                                     continuation.resume(returning: (response))
                                 case .failure(let error):
                                     continuation.resume(throwing: error)
@@ -214,10 +216,14 @@ struct KeylessView: View {
                         print("[KeylessView] Setting inputClientState: \(clientState)")
                         callback.setInputClientState(clientState)
                     }
+                    if let keylessId = keylessPayload?.keylessId {
+                        print("[KeylessView] Setting keylessId: \(keylessId)")
+                        callback.setKeylessId(keylessId)
+                    }
                     onNext()
                 } else if callback.operationType == "AUTHENTICATE" {
                     print("[KeylessView] Authenticating with clientState: \(callback.clientState)")
-                    let keylessPayload = try await keylessAuthenticate(clientState: callback.clientState)
+                    let keylessPayload = try await keylessAuthenticate(clientState: callback.clientState.isEmpty ? nil : callback.clientState)
                     if let jwt = keylessPayload?.jwt {
                         print("[KeylessView] Setting signedJwt: \(jwt)")
                         callback.setSignedJwt(jwt)
@@ -242,5 +248,6 @@ struct KeylessPayload: Codable {
 struct KeylessResponse: Codable {
     let jwt: String?
     let clientState: String?
+    let keylessId: String?
     let error: String?
 }
