@@ -232,7 +232,11 @@ struct KeylessView: View {
                 }
             } catch {
                 print("[KeylessView] Keyless Error: \(error)")
-                callback.setClientError(error.localizedDescription)
+                if let keylessError = error as? KeylessSDKError {
+                    callback.setClientError(keylessError.title)
+                } else {
+                    callback.setClientError(error.localizedDescription)
+                }
                 onNext()
             }
         }
