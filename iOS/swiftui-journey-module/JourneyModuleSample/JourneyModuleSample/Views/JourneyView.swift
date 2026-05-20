@@ -239,16 +239,6 @@ struct JourneyNodeView: View {
                     
                 case let recognizeCallback as PingOneRecognizeCallback:
                     KeylessView(callback: recognizeCallback, onNext: onNext).id(recognizeCallback.stableId)
-
-                case _ as HiddenValueCallback:
-                    if continueNode.callbacks.first(where: { $0 is MetadataCallback }) is MetadataCallback {
-                        // Handle the case when MetadataCallback is present
-                        // You can now access metadataCallback.value and other properties
-//                        KeylessView(callback: hiddenValueCallback, metadataCallback: metadataCallback, onNext: onNext)
-                    } else {
-                        // Handle the case when MetadataCallback is not present
-//                        KeylessView(callback: hiddenValueCallback, metadataCallback: nil, onNext: onNext)
-                    }
                     
                 default:
                     Text("Unsupported callback type")

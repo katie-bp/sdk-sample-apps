@@ -13,6 +13,16 @@ import PingJourneyPlugin
 import KeylessSDK
 import Combine
 
+extension AbstractCallback {
+    var prettyJSON: String {
+        guard let data = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted, .withoutEscapingSlashes]),
+              let string = String(data: data, encoding: .utf8) else {
+            return "{}"
+        }
+        return string
+    }
+}
+
 public class PingOneRecognizeCallback: AbstractCallback, @unchecked Sendable {
     // Stable identifier so SwiftUI preserves KeylessView identity across re-renders.
     // AbstractCallback.id returns a new UUID on every access, so we store our own.

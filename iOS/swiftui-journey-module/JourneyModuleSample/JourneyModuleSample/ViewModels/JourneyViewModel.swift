@@ -34,14 +34,14 @@ import Combine
 /// - discoveryEndpoint: Your OIDC discovery endpoint URL
 
 public let journey = Journey.createJourney { config in
-    config.serverUrl = "https://openam-recognize.forgeblocks.com/am"
+    config.serverUrl = "https://openam-recognize-nodes.forgeblocks.com/am"
     config.realm = "alpha"
     config.cookie = "1b00de68c4c9617"
     config.module(PingJourney.OidcModule.config) { oidcValue in
         oidcValue.clientId = "iosClient"
         oidcValue.scopes = ["openid", "profile", "email"]
-        oidcValue.redirectUri = "https://openam-recognize.forgeblocks.com/am/callback"
-        oidcValue.discoveryEndpoint = "https://openam-recognize.forgeblocks.com/am/oauth2/alpha/.well-known/openid-configuration"
+        oidcValue.redirectUri = "https://openam-recognize-nodes.forgeblocks.com/am/callback"
+        oidcValue.discoveryEndpoint = "https://openam-recognize-nodes.forgeblocks.com/am/oauth2/alpha/.well-known/openid-configuration"
     }
 //    config.serverUrl = "https://am.localtest.me:8445/am"
 //    config.realm = "alpha"
