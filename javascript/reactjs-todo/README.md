@@ -70,9 +70,7 @@ WEB_OAUTH_CLIENT=<<<Your Web OAuth client name/ID>>>
 ### Installing Dependencies and Run Build
 
 **Run from root of repo**: since this sample app uses npm's workspaces, we recommend running the npm commands from the root of the repo.
-
 ```sh
-# Install all dependencies (no need to pass the -w option)
 npm install
 ```
 

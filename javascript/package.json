@@ -54,6 +54,10 @@
     "*.{js,jsx,ts,tsx, .cjs}": "prettier --write",
     "*.{html,json}": "prettier --write"
   },
+  "overrides": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
   "dependencies": {
     "@forgerock/davinci-client": "latest",
     "@paralleldrive/cuid2": "^2.2.2"

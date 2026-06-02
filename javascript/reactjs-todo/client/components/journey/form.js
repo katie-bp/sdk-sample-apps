@@ -34,6 +34,7 @@ import NewUserIcon from '../../components/icons/new-user-icon';
 import FingerPrintIcon from '../../components/icons/finger-print-icon';
 import IdentityProvider from './identity-provider';
 import Protect from './protect';
+import PingOneRecognize from './pingone-recognize';
 
 /**
  * @function Form - React component for managing the user authentication journey
@@ -191,6 +192,11 @@ export default function Form({ action, bottomMessage, followUp, topMessage, jour
       renderStep.getCallbacksOfType(CallbackType.PingOneProtectEvaluationCallback).length)
   ) {
     return <Protect step={renderStep} setSubmissionStep={setSubmissionStep} />;
+  } else if (
+    renderStep.type === 'Step' &&
+    renderStep.callbacks.some((cb) => cb?.payload?.type === 'PingOneRecognizeCallback')
+  ) {
+    return <PingOneRecognize step={renderStep} setSubmissionStep={setSubmissionStep} />;
   } else if (
     renderStep.type === 'Step' &&
     renderStep.getCallbacksOfType(CallbackType.RedirectCallback).length

@@ -12,6 +12,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const webpack = require('webpack');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = () => {
   // Pull the local .env configuration, if present
@@ -35,6 +36,9 @@ module.exports = () => {
   const PINGONE_ENV_ID = process.env.PINGONE_ENV_ID || localEnv.PINGONE_ENV_ID;
 
   return {
+    experiments: {
+      asyncWebAssembly: true,
+    },
     // Point to the top level source file
     entry: {
       app: './client/index.js',
@@ -55,6 +59,16 @@ module.exports = () => {
     // Here, we are using it to transpile React's JSX to ordinary functions
     module: {
       rules: [
+        {
+          // Serve .wasm files as separate assets to avoid base64-inline corruption
+          test: /\.wasm$/,
+          type: 'asset/resource',
+        },
+        {
+          test: /\.js$/,
+          include: /node_modules\/@keyless\/sdk-web-components/,
+          use: [path.resolve(__dirname, 'fix-import-meta-url.loader.js')],
+        },
         {
           // If JavaScript file ...
           test: /\.js$/,
@@ -105,6 +119,10 @@ module.exports = () => {
     },
     devServer: {
       allowedHosts: ['localhost', 'react.example.com', '.example.com'],
+      headers: {
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'credentialless',
+      },
       https: true,
       open: true,
       client: {
@@ -115,6 +133,31 @@ module.exports = () => {
     },
     plugins: [
       new MiniCssExtractPlugin(),
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: path.resolve(
+              __dirname,
+              '../node_modules/@keyless/sdk-web-components/wasm.wasm',
+            ),
+            to: path.resolve(__dirname, 'public/wasm.wasm'),
+          },
+          {
+            from: path.resolve(
+              __dirname,
+              '../node_modules/@keyless/sdk-web-components/wasm.data',
+            ),
+            to: path.resolve(__dirname, 'public/wasm.data'),
+          },
+          {
+            from: path.resolve(
+              __dirname,
+              '../node_modules/@keyless/sdk-web-components/pthreads/wasm.wasm',
+            ),
+            to: path.resolve(__dirname, 'public/pthreads/wasm.wasm'),
+          },
+        ],
+      }),
       new webpack.DefinePlugin({
         // Inject all the environment variable into the Webpack build
         'process.env.SERVER_URL': JSON.stringify(SERVER_URL),
