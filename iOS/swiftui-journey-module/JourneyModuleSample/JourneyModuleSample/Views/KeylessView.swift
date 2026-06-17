@@ -109,7 +109,14 @@ struct KeylessView: View {
                         switch result {
                         case .success(let enrollmentSuccess):
                             print("Enrollment finished successfully. UserID: \(enrollmentSuccess.keylessId ?? "")")
-                            let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: enrollmentSuccess.clientState, recognizeId: enrollmentSuccess.keylessId, error: nil)
+                            var devicePublicSigningKey: String? = nil
+                            if case .success(let key) = Keyless.getDevicePublicSigningKey() {
+                                devicePublicSigningKey = key
+                                print("Enrollment: devicePublicSigningKey retrieved successfully")
+                            } else {
+                                print("Enrollment: devicePublicSigningKey not available")
+                            }
+                            let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: enrollmentSuccess.clientState, recognizeId: enrollmentSuccess.keylessId, devicePublicSigningKey: devicePublicSigningKey, error: nil)
                             continuation.resume(returning: (response))
                         case .failure(let error):
                             continuation.resume(throwing: error)
@@ -151,7 +158,7 @@ struct KeylessView: View {
                                 switch result {
                                 case .success(let enrollmentSuccess):
                                     print("Authentication finished successfully.")
-                                    let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: nil, recognizeId: nil, error: nil)
+                                    let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: nil, recognizeId: nil, devicePublicSigningKey: nil, error: nil)
                                     continuation.resume(returning: (response))
                                 case .failure(let error):
                                     continuation.resume(throwing: error)
@@ -185,7 +192,7 @@ struct KeylessView: View {
                                 switch result {
                                 case .success(let enrollmentSuccess):
                                     print("Authentication finished successfully.")
-                                    let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: nil, recognizeId: enrollmentSuccess.keylessId, error: nil)
+                                    let response = KeylessResponse(jwt: enrollmentSuccess.signedJwt, clientState: nil, recognizeId: enrollmentSuccess.keylessId, devicePublicSigningKey: nil, error: nil)
                                     continuation.resume(returning: (response))
                                 case .failure(let error):
                                     continuation.resume(throwing: error)
@@ -220,6 +227,10 @@ struct KeylessView: View {
                         print("[KeylessView] Setting recognizeId: \(recognizeId)")
                         callback.setRecognizeId(recognizeId)
                     }
+                    if let devicePublicSigningKey = keylessPayload?.devicePublicSigningKey {
+                        print("[KeylessView] Setting devicePublicSigningKey")
+                        callback.setDevicePublicSigningKey(devicePublicSigningKey)
+                    }
                     onNext()
                 } else if callback.operationType == "AUTHENTICATE" {
                     print("[KeylessView] Authenticating with clientState: \(callback.clientState)")
@@ -253,5 +264,6 @@ struct KeylessResponse: Codable {
     let jwt: String?
     let clientState: String?
     let recognizeId: String?
+    let devicePublicSigningKey: String?
     let error: String?
 }
